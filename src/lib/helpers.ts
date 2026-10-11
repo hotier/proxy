@@ -47,22 +47,6 @@ export function isProxyGateCredential(value: string): boolean {
   return !!password && value === proxyBasic(password);
 }
 
-export function filterHeaders(headers: Headers): Headers {
-  const filtered = new Headers();
-  const skip = new Set([
-    "host", "content-length", "transfer-encoding", "connection",
-    "x-forwarded-for", "x-forwarded-proto", "x-forwarded-host",
-  ]);
-  
-  headers.forEach((value, key) => {
-    if (!skip.has(key.toLowerCase())) {
-      filtered.set(key, value);
-    }
-  });
-  
-  return filtered;
-}
-
 export function copyHeaders(from: Headers, to: Headers, skip: string[] = []) {
   // content-encoding/length 需剥离:fetch 已解压响应体,原样透传会让客户端二次解码失败
   const skipSet = new Set([
@@ -77,7 +61,17 @@ export function copyHeaders(from: Headers, to: Headers, skip: string[] = []) {
   });
 }
 
-// 统计真实写出字节：代理响应是透传流，且 copyHeaders 会剥掉 content-length，
+// 透传流要把上游 Content-Length 带回去：下载工具靠它显示进度、开多线程、断点续传，
+// HEAD 探大小更是只看这一个头。copyHeaders 一律剥掉，等于让所有下载都变成「未知大小」
+//
+// 只在 identity 响应上补：fetch 解压过的话，我们转发的字节数已不等于上游那个值
+export function preserveVerbatimLength(from: Headers, to: Headers): void {
+  if (from.has("content-encoding")) return;
+  const length = from.get("content-length");
+  if (length) to.set("content-length", length);
+}
+
+// 统计真实写出字节：代理响应是透传流，且解压过的响应没有可靠的长度头，
 // 因此不能从响应头取流量，必须在流上逐块累加。
 // 兜底超时：只防「流被孤儿化后计数悬挂」，要长过最慢的正常大文件传输
 const LONG_TRANSFER_MS = 30 * 60 * 1000;

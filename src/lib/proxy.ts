@@ -2,7 +2,7 @@
 
 import { CONFIG } from "./config.ts";
 import { PREFIX_BY_UPSTREAM, rewriteHostsOf } from "./services.ts";
-import { jsonResponse, filterHeaders, copyHeaders, PROXY_KEY_HEADER, isProxyGateCredential } from "./helpers.ts";
+import { jsonResponse, copyHeaders, preserveVerbatimLength, PROXY_KEY_HEADER, isProxyGateCredential } from "./helpers.ts";
 
 // 正文改写需缓冲整个响应，给体积设上限，超限直接流式透传
 const TEXT_REWRITE_LIMIT = 32 * 1024 * 1024;
@@ -149,6 +149,7 @@ export async function proxyRequest(
     // 4. 流式透传（关键：不缓冲，直接传递 body）
     const newResp = new Response(resp.body, { status: resp.status });
     copyHeaders(resp.headers, newResp.headers, injectToken ? ECHOED_IDENTITY_HEADERS : []);
+    preserveVerbatimLength(resp.headers, newResp.headers);
 
     // 添加 CORS 头
     newResp.headers.set("Access-Control-Allow-Origin", "*");
@@ -245,6 +246,8 @@ export async function handleDockerProxy(
 
   const newResp = new Response(resp.body, { status: resp.status });
   copyHeaders(resp.headers, newResp.headers);
+  // docker pull 的进度条读的是 blob 响应的 Content-Length，剥掉它 layers 就不动
+  preserveVerbatimLength(resp.headers, newResp.headers);
 
   return newResp;
 }

@@ -15,7 +15,7 @@
           type="text" 
           id="url-input"
           aria-label="待转换的源站链接"
-          placeholder="例如: https://github.com/owner/repo/releases/download/v1.0/app.tar.gz"
+          placeholder="例如: https://raw.githubusercontent.com/cli/cli/trunk/README.md"
           class="w-full px-4 py-3 pr-11 bg-surface-container-low border border-outline-variant rounded-xl text-on-surface focus:outline-none focus:border-primary transition-colors"
         />
         <button 
@@ -65,10 +65,10 @@
       <button class="example-btn text-xs px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" data-example="https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.zip">
         Release 文件
       </button>
-      <button class="example-btn text-xs px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" data-example="https://github.com/owner/repo.git">
+      <button class="example-btn text-xs px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" data-example="https://github.com/octocat/Hello-World.git">
         Git 仓库
       </button>
-      <button class="example-btn text-xs px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" data-example="https://raw.githubusercontent.com/owner/repo/main/README.md">
+      <button class="example-btn text-xs px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" data-example="https://github.com/cli/cli/blob/trunk/README.md">
         Raw 文件
       </button>
       <button class="example-btn text-xs px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" data-example="library/nginx:latest">
@@ -115,7 +115,7 @@
 </div>
 
 <script>
-  import { PREFIX_BY_HOST } from '../lib/services';
+  import { PREFIX_BY_HOST, githubFileProxyPath } from '../lib/services';
 
   const urlInput = document.getElementById('url-input');
   const formatSelectBtn = document.getElementById('format-select-btn');
@@ -164,8 +164,11 @@
       if (!prefix) {
         return { error: `不支持的域名: ${host}` };
       }
+      // github.com 地址栏里的文件链接是网页形状(/blob/<ref>/<path>)，直接搬进 /api/gh/ 会
+      // 给用户一个 GitHub 页面；按 raw 端点形状给出即纯文件，也省掉 /raw/ 形态那次 302
+      const githubFile = host.replace(/^www\./, '') === 'github.com' ? githubFileProxyPath(path) : null;
       // 保留查询串：avatars 的 ?v=4、PyPI 索引的 ?format= 都参与语义
-      const proxyPath = prefix + path + url.search;
+      const proxyPath = (githubFile ?? prefix + path) + url.search;
 
       const fullUrl = BASE + proxyPath;
 

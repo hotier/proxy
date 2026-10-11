@@ -117,6 +117,7 @@ better-icons get simple-icons:docker    # 查看 SVG
 |---------|---------|
 | `https://github.com/owner/repo/releases/download/v1.0/app.zip` | `{域名}/api/gh/owner/repo/releases/download/v1.0/app.zip` |
 | `https://raw.githubusercontent.com/owner/repo/main/README.md` | `{域名}/api/ghraw/owner/repo/main/README.md` |
+| `https://github.com/owner/repo/blob/main/README.md`（地址栏里的文件页） | `{域名}/api/ghraw/owner/repo/main/README.md`（blob 段会被剥掉，直接给纯文件） |
 | `https://github.com/owner/repo`（浏览页面） | `{域名}/api/gh/owner/repo` |
 | `https://codeload.github.com/...` | `{域名}/api/codeload/...` |
 | `https://objects.githubusercontent.com/...` | `{域名}/api/objects/...` |

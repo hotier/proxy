@@ -20,6 +20,8 @@ export type Route = {
   service: Service;
   // api: 走 /api/* 通用前缀透传；v2: 由 src/pages/v2/[...path].ts 处理 registry 协议与 token 流程
   handler?: 'api' | 'v2';
+  // 容忍 github.com 网页地址的 blob|raw 段，命中则剥掉再打上游(见 withoutBlobSegment)
+  stripBlobSegment?: boolean;
   // 该上游会在 HTML/JSON 正文里给出这些 host 的绝对 URL，不改写则客户端绕过代理直连源站；
   // 列出的 host 会被替换成各自在注册表里的本代理前缀
   rewriteHosts?: string[];
@@ -30,7 +32,12 @@ export type Route = {
 export const ROUTES: Route[] = [
   // GitHub
   { prefix: '/api/gh/', upstream: 'https://github.com', service: 'github' },
-  { prefix: '/api/ghraw/', upstream: 'https://raw.githubusercontent.com', service: 'github' },
+  {
+    prefix: '/api/ghraw/',
+    upstream: 'https://raw.githubusercontent.com',
+    service: 'github',
+    stripBlobSegment: true,
+  },
   { prefix: '/api/codeload/', upstream: 'https://codeload.github.com', service: 'github' },
   { prefix: '/api/objects/', upstream: 'https://objects.githubusercontent.com', service: 'github' },
   { prefix: '/api/release-assets/', upstream: 'https://release-assets.githubusercontent.com', service: 'github' },
@@ -165,6 +172,24 @@ export function isUsageRequest(
 export const PREFIX_BY_UPSTREAM: Record<string, string> = Object.fromEntries(
   API_ROUTES.map((route) => [route.upstream, route.prefix])
 );
+
+// 地址栏复制到的 GitHub 文件链接都带 blob 段，raw 上游不认这一段：原样搬进 /api/ghraw/ 是 404，
+// 留在 /api/gh/ 拿回的是 GitHub 网页（实测 306KB 正文，其中 174 处资源地址还会绕开代理直连）。
+// 分支名恰好叫 blob/raw 时会被多剥一段，那种地址请用 /api/ghraw/<o>/<r>/<ref>/<path> 裸形状
+const GITHUB_BLOB_PATH = /^(\/[^/]+\/[^/]+)\/(?:blob|raw)\/(.+)$/;
+
+export function withoutBlobSegment(path: string): string | null {
+  const matched = ('/' + path.replace(/^\/+/, '')).match(GITHUB_BLOB_PATH);
+  return matched ? `${matched[1]}/${matched[2]}` : null;
+}
+
+// github.com 的文件网页地址 -> 本代理 raw 端点路径；不是该形状则返回 null
+export function githubFileProxyPath(pathname: string): string | null {
+  const raw = withoutBlobSegment(pathname);
+  if (!raw) return null;
+  const prefix = PREFIX_BY_UPSTREAM['https://raw.githubusercontent.com'];
+  return prefix ? prefix.replace(/\/+$/, '') + raw : null;
+}
 
 // 响应体改写：origin -> 需要替换成代理地址的 host 列表
 const REWRITE_BY_UPSTREAM: Record<string, string[]> = Object.fromEntries(

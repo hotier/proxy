@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { proxyRequest } from '../../lib/proxy';
-import { findApiRoute } from '../../lib/services';
+import { findApiRoute, withoutBlobSegment } from '../../lib/services';
 import { checkRateLimit } from '../../lib/rate-limit';
 import { withLogging } from '../../lib/logging';
 
@@ -25,7 +25,8 @@ export const ALL: APIRoute = async ({ request }) => {
   // 前缀 -> 上游来自统一注册表(src/lib/services)
   const route = findApiRoute(path);
   if (route) {
-    const targetPath = path.slice(route.prefix.length);
+    let targetPath = path.slice(route.prefix.length);
+    if (route.stripBlobSegment) targetPath = withoutBlobSegment(targetPath) ?? targetPath;
     return withLogging(request, () => 
       proxyRequest(request, route.upstream, targetPath, url.search)
     );

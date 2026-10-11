@@ -1,7 +1,7 @@
 {
   "deploy": {
     "org": "hotier",
-    "app": "github-docker-proxy",
+    "app": "proxy",
     "framework": "astro",
     "install": "npm ci",
     "build": "npm run build",

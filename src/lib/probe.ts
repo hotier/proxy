@@ -89,7 +89,7 @@ export const PROBES: Record<Service, ProbeTarget> = {
   github: {
     url: 'https://api.github.com/zen',
     method: 'GET',
-    headers: { 'user-agent': 'github-docker-proxy-status-check' },
+    headers: { 'user-agent': 'proxy-status-check' },
   },
   docker: { url: 'https://registry-1.docker.io/v2/', method: 'GET', ok: [200, 401] },
   npm: { url: 'https://registry.npmjs.org/mime', ok: [200] },

@@ -7,7 +7,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "deploy": "npm run build && deno deploy --org hotier --app github-docker-proxy --prod",
+    "deploy": "npm run build && deno deploy --org hotier --app proxy --prod",
     "preview": "astro preview",
     "dev": "node --env-file-if-exists=.env node_modules/astro/bin/astro.mjs dev",
     "icons": "node scripts/build-icons.mjs",

@@ -10,7 +10,7 @@ import { cnDayStart } from './cn-date.ts';
 function readToken(): string | undefined {
   return process.env.DEPLOY_ANALYTICS_TOKEN || process.env.DENO_API_TOKEN;
 }
-const APP_NAME = 'github-docker-proxy';
+const APP_NAME = 'proxy';
 const API_BASE = 'https://api.deno.com/v2';
 
 // 未配置时给前端的固定回执：状态页按这段文字判断要不要提示去配环境变量

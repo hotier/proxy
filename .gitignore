@@ -5,6 +5,12 @@ node_modules/
 dist/
 build/
 
+# Astro 生成物（astro sync/build 重写；dev.json 存的是 dev server 的 pid 与启动时间）
+.astro/
+
+# uv 在仓库根落下的独立 Python 运行时（82M，且不在任何脚本的引用路径里）
+Python/
+
 # Environment variables
 .env
 .env.local

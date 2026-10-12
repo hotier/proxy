@@ -79,6 +79,14 @@ const ogImage = new URL('/og-image.jpg', Astro.url.origin).href;
         var m = document.querySelector('meta[name="theme-color"]');
         if (m) m.setAttribute('content', d ? themeDark : themeLight);
       } catch (e) {}
+      // 入场错峰的用途是「接得上上一个页面」：只有站内跳过来的才值得排队淡入。
+      // 直接打开或刷新时前面什么都没有，错峰只会被读成「卡片在一张张加载」。
+      // 必须在首帧前写好，所以跟主题预应用放在同一段。
+      try {
+        if (document.referrer && new URL(document.referrer).origin === location.origin) {
+          document.documentElement.dataset.nav = 'site';
+        }
+      } catch (e) {}
     })();
   </script>
   

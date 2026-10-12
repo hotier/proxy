@@ -3,6 +3,7 @@ import { defineMiddleware } from 'astro/middleware';
 import { recordRequest, trackPageView } from './lib/stats';
 import { serviceOf, isUsageRequest } from './lib/services';
 import { checkAuth, countOutboundBytes } from './lib/helpers';
+import { compressResponse } from './lib/compress';
 
 const MAIN_PAGES = new Set(['/', '/github', '/docker', '/packages', '/status']);
 
@@ -53,5 +54,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     void trackPageView(clientIp(request), request.headers.get('user-agent') || '');
   }
 
-  return next();
+  // 走到这里的都是本站自己产出的响应（页面 HTML 与 /api 的 JSON），
+  // 代理透传在上面就返回了，不会被动到正文
+  return compressResponse(await next(), request.headers.get('accept-encoding'));
 });

@@ -1,10 +1,13 @@
 ---
 // URL 转换器组件 - 纯 Astro + 原生 JS
+import LinePicker from './LinePicker.astro';
+import SelectMenu from './SelectMenu.astro';
+import { menuOption } from '../lib/menu';
 ---
 
 <div class="url-converter">
   <!-- 输入区域 -->
-  <!-- backdrop-filter 让每张玻璃卡片各自成层叠上下文,需 relative z-10 才能压住 DOM 靠后的"转换结果"卡片 -->
+  <!-- backdrop-filter 让每张玻璃卡片各自成层叠上下文,需 relative z-10 才能压住 DOM 靠后的"加速线路"卡片 -->
   <div class="relative z-10 bg-surface rounded-2xl p-4 mb-4 border border-outline-variant">
     <!-- 手机上输入框独占一行:和 128px 的格式选择器并排只剩 150px,长链接看不出转的是什么 -->
     <div class="flex flex-col gap-2 sm:flex-row">
@@ -16,7 +19,7 @@
           id="url-input"
           aria-label="待转换的源站链接"
           placeholder="例如: https://raw.githubusercontent.com/cli/cli/trunk/README.md"
-          class="w-full px-4 py-3 pr-11 bg-surface-container-low border border-outline-variant rounded-xl text-on-surface focus:outline-none focus:border-primary transition-colors"
+          class="w-full px-4 py-2 pr-11 bg-surface-container-low border border-outline-variant rounded-xl text-on-surface focus:outline-none focus:border-primary transition-colors"
         />
         <button 
           type="button"
@@ -28,36 +31,32 @@
           <span class="icon-[material-symbols--close-rounded] text-lg"></span>
         </button>
       </div>
-      <!-- 自定义下拉菜单 -->
-      <div class="relative self-start sm:self-auto">
-        <button 
-          id="format-select-btn" aria-haspopup="listbox"
-          class="h-full px-3 sm:px-4 py-3 bg-surface-container-low border border-outline-variant rounded-xl text-sm text-on-surface focus:outline-none focus:border-primary transition-colors flex items-center gap-2 min-w-[128px] sm:min-w-[140px] shrink-0 justify-between"
-        >
-          <span id="format-select-text">直接链接</span>
-          <span class="icon-[material-symbols--arrow-drop-down] text-lg"></span>
+      <!-- 格式选择器：外壳与线路选择器共用(SelectMenu.astro)，宽度下限是这个页面自己的 -->
+      <SelectMenu
+        name="format"
+        size="field"
+        label="直接链接"
+        ariaLabel="选择输出格式"
+        triggerClass="min-w-[128px] sm:min-w-[140px]"
+        class="self-start sm:self-auto"
+      >
+        <button class:list={[menuOption, 'format-option flex items-center gap-3']} data-menu-option data-value="direct">
+          <span class="icon-[material-symbols--link] text-lg"></span>
+          <span>直接链接</span>
         </button>
-        
-        <!-- 下拉菜单 -->
-        <div id="format-select-menu" class="hidden absolute right-0 mt-2 bg-surface-container-highest rounded-2xl overflow-hidden shadow-lg border border-outline-variant py-2 z-50 whitespace-nowrap">
-          <button class="format-option w-full flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-primary/15 hover:text-primary transition-colors" data-value="direct">
-            <span class="icon-[material-symbols--link] text-lg"></span>
-            <span>直接链接</span>
-          </button>
-          <button class="format-option w-full flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-primary/15 hover:text-primary transition-colors" data-value="git">
-            <span class="icon-[simple-icons--git] text-lg"></span>
-            <span>Git Clone</span>
-          </button>
-          <button class="format-option w-full flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-primary/15 hover:text-primary transition-colors" data-value="wget">
-            <span class="icon-[material-symbols--download] text-lg"></span>
-            <span>Wget</span>
-          </button>
-          <button class="format-option w-full flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-primary/15 hover:text-primary transition-colors" data-value="docker">
-            <span class="icon-[simple-icons--docker] text-lg"></span>
-            <span>Docker Pull</span>
-          </button>
-        </div>
-      </div>
+        <button class:list={[menuOption, 'format-option flex items-center gap-3']} data-menu-option data-value="git">
+          <span class="icon-[simple-icons--git] text-lg"></span>
+          <span>Git Clone</span>
+        </button>
+        <button class:list={[menuOption, 'format-option flex items-center gap-3']} data-menu-option data-value="wget">
+          <span class="icon-[material-symbols--download] text-lg"></span>
+          <span>Wget</span>
+        </button>
+        <button class:list={[menuOption, 'format-option flex items-center gap-3']} data-menu-option data-value="docker">
+          <span class="icon-[simple-icons--docker] text-lg"></span>
+          <span>Docker Pull</span>
+        </button>
+      </SelectMenu>
     </div>
     
     <!-- 快捷示例 -->
@@ -88,10 +87,12 @@
 
   <!-- 输出区域 -->
   <div id="output-section" class="hidden">
-    <div class="bg-surface rounded-2xl overflow-hidden border border-outline-variant">
-      <div class="flex items-center justify-between px-4 py-3 bg-surface-container border-b border-outline-variant">
-        <span class="text-sm font-medium text-on-surface">转换结果</span>
-        <div class="flex gap-1">
+    <!-- 不能加 overflow-hidden:线路菜单从这里往下展开会超出卡片高度,被裁掉 -->
+    <div class="bg-surface rounded-2xl border border-outline-variant">
+      <div class="relative z-20 flex items-center justify-between gap-2 px-4 py-3 bg-surface-container border-b border-outline-variant rounded-t-2xl">
+        <span class="text-sm font-medium text-on-surface shrink-0">加速线路</span>
+        <div class="flex items-center gap-1 min-w-0">
+          <LinePicker size="sm" />
           <button id="copy-btn" aria-label="复制" class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" title="复制">
             <span class="icon-[material-symbols--content-copy] text-lg"></span>
           </button>
@@ -102,7 +103,6 @@
       </div>
       <div class="p-4">
         <div class="bg-primary-container rounded-xl p-3">
-          <div class="text-xs text-on-primary-container/70 mb-1">加速链接</div>
           <div id="converted-url" class="text-sm text-on-primary-container break-all font-mono font-medium"></div>
         </div>
       </div>
@@ -116,11 +116,12 @@
 
 <script>
   import { PREFIX_BY_HOST, githubFileProxyPath } from '../lib/services';
+  // 选择器的开合（互斥、点外面或 Esc 收起）在共享层里，页面不管菜单怎么开关
+  import '../lib/menu';
+  import { initLines, lineBase, onLineChange } from '../lib/lines';
 
   const urlInput = document.getElementById('url-input');
-  const formatSelectBtn = document.getElementById('format-select-btn');
-  const formatSelectMenu = document.getElementById('format-select-menu');
-  const formatSelectText = document.getElementById('format-select-text');
+  const formatSelectText = document.querySelector('[data-menu="format"] [data-menu-text]');
   const formatOptions = document.querySelectorAll('.format-option');
   let currentFormat = 'direct';
   const outputSection = document.getElementById('output-section');
@@ -131,7 +132,10 @@
   const openBtn = document.getElementById('open-btn');
   const clearInputBtn = document.getElementById('clear-input-btn');
 
-  const BASE = window.location.origin;
+  // 结果链接的前缀由共享线路层给出（选哪条、跨页同步、按延迟兜底都在 src/lib/lines.ts）
+  function proxyBase() {
+    return lineBase();
+  }
 
   // URL 转换逻辑
   function convertUrl(input, format) {
@@ -142,8 +146,8 @@
       if (!input.includes(' ') && !input.includes('http')) {
         return {
           original: input,
-          converted: `docker pull ${BASE}/${input}`,
-          url: `${BASE}/${input}`
+          converted: `docker pull ${proxyBase()}/${input}`,
+          url: `${proxyBase()}/${input}`
         };
       }
     }
@@ -170,7 +174,7 @@
       // 保留查询串：avatars 的 ?v=4、PyPI 索引的 ?format= 都参与语义
       const proxyPath = (githubFile ?? prefix + path) + url.search;
 
-      const fullUrl = BASE + proxyPath;
+      const fullUrl = proxyBase() + proxyPath;
 
       // 根据格式返回
       switch (format) {
@@ -229,26 +233,13 @@
 
   // 事件监听
   urlInput.addEventListener('input', updateOutput);
-  
-  // 下拉菜单切换
-  formatSelectBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    formatSelectMenu?.classList.toggle('hidden');
-  });
-  
-  // 点击外部关闭菜单
-  document.addEventListener('click', (e) => {
-    if (!formatSelectBtn?.contains(e.target) && !formatSelectMenu?.contains(e.target)) {
-      formatSelectMenu?.classList.add('hidden');
-    }
-  });
-  
+
   // 菜单当前项的标记:初始化也要打,否则默认项看不出选中
   function markActiveFormat() {
     formatOptions.forEach(opt => opt.classList.toggle('menu-active', opt.dataset.value === currentFormat));
   }
 
-  // 选项点击
+  // 选项点击:收起浮层由共享层负责,这里只管选中
   formatOptions.forEach(option => {
     option.addEventListener('click', () => {
       currentFormat = option.dataset.value;
@@ -257,7 +248,6 @@
       // 更新选中状态
       markActiveFormat();
       
-      formatSelectMenu?.classList.add('hidden');
       updateOutput();
     });
   });
@@ -313,4 +303,8 @@
   markActiveFormat();
   const initialOption = Array.from(formatOptions).find(opt => opt.dataset.value === currentFormat);
   if (initialOption) formatSelectText.textContent = initialOption.querySelector('span:last-child').textContent;
+
+  // 换线路要重算结果:链接前缀是拼出来的,不是事后替换
+  onLineChange(() => updateOutput());
+  initLines();
 </script>

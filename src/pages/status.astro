@@ -1,6 +1,7 @@
 ---
 // 状态和配置页面
 import Layout from '../layouts/Layout.astro';
+import { ACCESS_DOMAINS } from '../lib/domains';
 
 // 服务节点列表配置；图标类名必须是完整字面量（构建期图标引擎按源码扫描）
 const services = [
@@ -36,7 +37,7 @@ const services = [
   </div>
 
   <!-- 服务节点列表：每服务一行，状态与请求/流量统计均为文本 -->
-  <div class="bg-surface-container-highest rounded-3xl p-4 sm:p-6 mb-6" id="status-cards">
+  <div class="lg rounded-3xl p-4 sm:p-6 mb-6" id="status-cards">
     <div class="overflow-x-auto">
       <!-- table-fixed + 百分比列宽：列宽与单元格内容解耦，数字自增动画只换字形不会推挤列宽 -->
       <!-- 窄屏(<md)由 scoped CSS 展开成两列卡片：7 列 + min-w-[780px] 在手机上逃不掉横向滚动 -->
@@ -78,7 +79,7 @@ const services = [
   </div>
 
   <!-- 访问统计：刷新只作用于本卡片（主站访问 + 平台用量） -->
-  <div class="bg-surface-container-highest rounded-3xl p-4 sm:p-6 mb-6">
+  <div class="lg rounded-3xl p-4 sm:p-6 mb-6">
     <div class="flex items-center justify-between gap-3 mb-4">
       <h2 class="text-xl font-medium text-on-surface flex items-center gap-3">
         <span class="icon-[material-symbols--analytics] text-primary"></span>
@@ -157,9 +158,46 @@ const services = [
       <div id="deno-total-note" class="mt-3 text-xs text-on-surface-variant"></div>
     </div>
   </div>
+
+  <!-- 访问线路：对外只说线路几 + 域名，域名归属这类内部信息不展示。
+       清单是部署期确定的静态数据(src/lib/domains)，不进轮询；延迟是访客各自打的探测，
+       只在进页面时测一轮，右上角那个按钮可以手动重测 -->
+  <div class="lg rounded-3xl p-4 sm:p-6 mb-6">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div class="flex items-center gap-3">
+        <span class="icon-[material-symbols--public] text-primary text-xl"></span>
+        <h2 class="text-xl font-medium text-on-surface">加速线路</h2>
+      </div>
+      <div class="flex shrink-0 items-center gap-2">
+        <span id="refreshed-at-lines" class="text-xs text-on-surface-variant"></span>
+        <button id="refresh-btn-lines" type="button" aria-label="重新测速" title="重新测速" class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 disabled:pointer-events-none">
+          <span id="refresh-icon-lines" class="icon-[material-symbols--refresh] text-lg"></span>
+        </button>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {ACCESS_DOMAINS.map((d) => (
+        <div class="bg-surface rounded-2xl p-4">
+          <div class="flex items-center justify-between gap-3 mb-2">
+            <span class="text-sm font-medium text-on-surface">{d.name}</span>
+            <!-- 浏览器实测的探测延迟，由 src/lib/lines.ts 填；这里不展示选中态，状态页只报可达性与快慢 -->
+            <span class="text-xs tabular-nums text-on-surface-variant shrink-0" data-line-latency={d.host}></span>
+          </div>
+          <a
+            href={`https://${d.host}`}
+            target="_blank"
+            rel="noopener"
+            class="font-mono text-sm text-primary hover:underline break-all"
+          >{d.host}</a>
+        </div>
+      ))}
+    </div>
+  </div>
 </Layout>
 
 <script>
+  import { LATENCY_EVENT, initLines, latencyUpdatedAt, refreshLatency } from '../lib/lines';
+
   // 状态页要展示的服务节点，与探测结果里的键一致
   const NODES = ['github', 'docker', 'npm', 'go', 'jsd', 'unpkg', 'maven', 'mcr', 'pypi'];
 
@@ -215,8 +253,12 @@ const services = [
     return out;
   }
 
+  function atText(ts: number) {
+    return '数据更新于 ' + new Date(ts).toLocaleTimeString('zh-CN');
+  }
+
   function showRefreshedAt(scope: Scope, ts: number) {
-    const text = '数据更新于 ' + new Date(ts).toLocaleTimeString('zh-CN');
+    const text = atText(ts);
     cardsOf(scope).forEach((card) => updateElement(card.at, text));
   }
 
@@ -486,6 +528,25 @@ const services = [
   document.getElementById('refresh-btn-services')?.addEventListener('click', () => loadDashboard('services', true, true));
   document.getElementById('refresh-btn-stats')?.addEventListener('click', () => loadDashboard('stats', true, true));
 
+  // 线路延迟只在进页面时测一轮（10 分钟内跨页复用缓存），页面开着不会自己重测，所以给个手动入口。
+  // 不做成定时轮询：探测是每个访客各自发的，为一张状态页反复打请求等于白花边缘 CPU
+  const linesBtn = document.getElementById('refresh-btn-lines') as HTMLButtonElement | null;
+  linesBtn?.addEventListener('click', () => {
+    linesBtn.disabled = true;
+    document.getElementById('refresh-icon-lines')?.classList.add('animate-spin');
+    void refreshLatency().then(() => {
+      linesBtn.disabled = false;
+      document.getElementById('refresh-icon-lines')?.classList.remove('animate-spin');
+    });
+  });
+
+  // 延迟不是服务端返回的数据，没有响应时间戳可显示；这里报页面上这几条线路最近一次探测的时间，
+  // 也就是缓存的写入时刻——跨页复用缓存时它可能比本次打开页面更早，那正是这几个读数的真实年龄
+  window.addEventListener(LATENCY_EVENT, () => {
+    const at = latencyUpdatedAt();
+    if (at) updateElement('refreshed-at-lines', atText(at));
+  });
+
   // 到期自动刷新：只绕过本地缓存（否则同频的 TTL 会让数据永不更新），
   // 仍走服务端缓存，让同一实例上的多个访客共享一次出网探测
   // 没人看就不必付费：后台标签页不轮询；前台超过 IDLE_MS 没有任何交互，
@@ -521,4 +582,7 @@ const services = [
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'hidden') wake(true);
   });
+
+  // 线路卡片上的延迟徽标：状态页没有选择器，只需要测速这一部分
+  initLines();
 </script>

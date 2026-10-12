@@ -1,0 +1,39 @@
+---
+// 线路选择器：状态页之外的四个页面共用，选中状态与测速徽标由 src/lib/lines.ts 接管。
+// 外壳（触发器、浮层、开合）是 SelectMenu.astro，这里只管线路特有的两行式选项：
+// 第一行线路名 + 实测延迟，第二行域名。清单来自 src/lib/domains，在服务端就渲染好，
+// 这样脚本还没跑时触发器上也是有意义的线路名，不会闪空白。
+import SelectMenu from './SelectMenu.astro';
+import { menuOption } from '../lib/menu';
+import { lineOptions } from '../lib/domains';
+
+interface Props {
+  /** 菜单展开方向，贴在卡片右侧用 right */
+  align?: 'left' | 'right';
+  /** sm 用于卡片表头那种矮一行的高度 */
+  size?: 'sm' | 'md';
+}
+
+const { align = 'right', size = 'md' } = Astro.props;
+const options = lineOptions(Astro.url.origin);
+const current = options.find((o) => o.current) ?? options[0];
+---
+
+<SelectMenu name="line" {align} {size} label={current.name} ariaLabel="切换加速线路">
+  {options.map((o) => (
+    <button
+      type="button"
+      class:list={[menuOption, 'line-option flex flex-col items-stretch gap-0.5 text-left']}
+      data-menu-option
+      data-line-option
+      data-host={o.host}
+      data-name={o.name}
+    >
+      <span class="flex items-center justify-between gap-4">
+        <span>{o.name}</span>
+        <span class="text-xs tabular-nums text-on-surface-variant" data-line-latency={o.host}></span>
+      </span>
+      <span class="text-xs font-mono text-on-surface-variant">{o.host}</span>
+    </button>
+  ))}
+</SelectMenu>

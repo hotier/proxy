@@ -1,6 +1,7 @@
 ---
 // Docker 加速页面
 import Layout from '../layouts/Layout.astro';
+import LinePicker from '../components/LinePicker.astro';
 ---
 
 <Layout
@@ -8,14 +9,20 @@ import Layout from '../layouts/Layout.astro';
   description="加速 Docker Hub、GHCR、GCR、Quay、MCR 镜像仓库的拉取，registry 认证与 token 交换由代理服务端完成。"
   activeNav="/docker"
 >
-  <!-- 页面标题 -->
-  <div class="mb-6">
-    <h1 class="text-2xl sm:text-3xl font-medium text-on-surface mb-2">Docker 加速</h1>
-    <p class="text-on-surface-variant">支持 Docker Hub、GHCR、GCR、Quay、MCR 等镜像仓库的加速拉取</p>
+  <!-- 页面标题 + 线路选择：选了哪条，下面示例里的前缀就换成哪条(src/lib/lines.ts) -->
+  <div class="relative z-20 mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl sm:text-3xl font-medium text-on-surface mb-2">Docker 加速</h1>
+      <p class="text-on-surface-variant">支持 Docker Hub、GHCR、GCR、Quay、MCR 等镜像仓库的加速拉取</p>
+    </div>
+    <div class="flex items-center justify-between gap-3 w-full sm:w-auto sm:justify-end">
+      <span class="text-sm text-on-surface-variant">加速线路</span>
+      <LinePicker />
+    </div>
   </div>
 
   <!-- 配置说明 -->
-  <div class="bg-surface-container-highest rounded-3xl p-4 sm:p-6 mb-6">
+  <div class="lg rounded-3xl p-4 sm:p-6 mb-6">
     <h2 class="text-xl font-medium text-on-surface mb-4 flex items-center gap-3">
       <span class="icon-[material-symbols--settings] text-primary"></span>
       配置 Docker 镜像加速
@@ -59,7 +66,7 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <!-- 支持的 Registry -->
-  <div class="bg-surface-container-highest rounded-3xl p-4 sm:p-6">
+  <div class="lg rounded-3xl p-4 sm:p-6">
     <h2 class="text-xl font-medium text-on-surface mb-4">支持的 Registry</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div class="bg-surface-container rounded-2xl px-4 py-3.5 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
@@ -91,6 +98,8 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
+  import { initLines } from '../lib/lines';
+
   // 复制功能
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -104,4 +113,6 @@ import Layout from '../layouts/Layout.astro';
       }
     });
   });
+
+  initLines();
 </script>

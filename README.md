@@ -109,7 +109,7 @@ better-icons get simple-icons:docker    # 查看 SVG
 
 ## 使用方式
 
-将 `https://xxx.deno.dev` 替换为你的域名（首页与 `/github`、`/docker` 页面提供交互式 URL 转换器）。
+下文示例中的 `{域名}` 指你部署后的访问地址，**不含 `https://`**（Deno Deploy 形如 `<应用名>.<组织名>.deno.net`；首页与 `/github`、`/docker` 页面提供交互式 URL 转换器，粘原始链接即可得到加速地址）。
 
 ### GitHub
 
@@ -127,7 +127,7 @@ better-icons get simple-icons:docker    # 查看 SVG
 想让此后所有 `git clone` / `git fetch` 自动走加速（脚本写的是 `git config --global url.…insteadOf`，还原命令随脚本输出）：
 
 ```bash
-curl -fsSL https://xxx.deno.dev/install/git.sh | sh
+curl -fsSL https://{域名}/install/git.sh | sh
 ```
 
 ### Docker
@@ -136,7 +136,7 @@ curl -fsSL https://xxx.deno.dev/install/git.sh | sh
 
 ```json
 {
-  "registry-mirrors": ["https://xxx.deno.dev"]
+  "registry-mirrors": ["https://{域名}"]
 }
 ```
 
@@ -147,13 +147,13 @@ sudo systemctl daemon-reload && sudo systemctl restart docker
 Docker 只会向主机根路径发起 `/v2/...` 请求，因此 `docker pull` 支持两种方式：配置上面的 mirror，或直接给镜像加上 Docker Hub 命名空间：
 
 ```bash
-docker pull xxx.deno.dev/library/nginx:latest   # 无需改 daemon.json
+docker pull {域名}/library/nginx:latest   # 无需改 daemon.json
 ```
 
 GHCR / GCR / K8s / Quay / MCR 的前缀位于子路径下，供 HTTP 直接取 manifest 与 blob（curl、脚本，或支持带路径 registry 的工具）：
 
 ```bash
-curl https://xxx.deno.dev/api/ghcr/v2/<owner>/<image>/manifests/<tag> \
+curl https://{域名}/api/ghcr/v2/<owner>/<image>/manifests/<tag> \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -163,21 +163,21 @@ Registry 指向 `/api/npm/`（透传 npm 官方源 registry.npmjs.org）：
 
 ```bash
 # 一键脚本（POSIX shell，已安装的 pnpm / yarn 一并设置）
-curl -fsSL https://xxx.deno.dev/install/npm.sh | sh
+curl -fsSL https://{域名}/install/npm.sh | sh
 
 # 或手动
-npm config set registry https://xxx.deno.dev/api/npm/
-# pnpm / yarn 同理；项目内也可写 .npmrc: registry=https://xxx.deno.dev/api/npm/
+npm config set registry https://{域名}/api/npm/
+# pnpm / yarn 同理；项目内也可写 .npmrc: registry=https://{域名}/api/npm/
 ```
 
 ### Go Modules
 
 ```bash
 # 一键脚本
-curl -fsSL https://xxx.deno.dev/install/go.sh | sh
+curl -fsSL https://{域名}/install/go.sh | sh
 
 # 或手动
-go env -w GOPROXY=https://xxx.deno.dev/api/goproxy/,direct
+go env -w GOPROXY=https://{域名}/api/goproxy/,direct
 ```
 
 Go 1.15+ 会把校验和数据库查询发到 `{GOPROXY}/sumdb/sum.golang.org/...`，本代理已将其转发到 sum.golang.org，GOPRIVATE 之外的模块验证无需额外配置。
@@ -188,7 +188,7 @@ Go 1.15+ 会把校验和数据库查询发到 `{GOPROXY}/sumdb/sum.golang.org/..
 
 ```
 https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js
-→ https://xxx.deno.dev/api/jsd/npm/vue@3/dist/vue.global.prod.js
+→ https://{域名}/api/jsd/npm/vue@3/dist/vue.global.prod.js
 ```
 
 ### unpkg
@@ -197,7 +197,7 @@ https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js
 
 ```
 https://unpkg.com/vue@3/dist/vue.global.prod.js
-→ https://xxx.deno.dev/api/unpkg/vue@3/dist/vue.global.prod.js
+→ https://{域名}/api/unpkg/vue@3/dist/vue.global.prod.js
 ```
 
 未指定版本的链接会由 unpkg 返回 302 到具体版本，`Location` 同样被改写回本代理，解析后继续走加速通道。
@@ -209,8 +209,8 @@ https://unpkg.com/vue@3/dist/vue.global.prod.js
 ```groovy
 // settings.gradle / build.gradle
 repositories {
-    maven { url 'https://xxx.deno.dev/api/maven/maven2' }
-    maven { url 'https://xxx.deno.dev/api/gmaven/android/maven2' }
+    maven { url 'https://{域名}/api/maven/maven2' }
+    maven { url 'https://{域名}/api/gmaven/android/maven2' }
 }
 ```
 
@@ -219,7 +219,7 @@ repositories {
 <mirror>
   <id>proxy-central</id>
   <mirrorOf>central</mirrorOf>
-  <url>https://xxx.deno.dev/api/maven/maven2</url>
+  <url>https://{域名}/api/maven/maven2</url>
 </mirror>
 ```
 
@@ -229,13 +229,13 @@ repositories {
 
 ```bash
 # 一键脚本（写入 pip 全局配置，pip 23.1+ 才支持 config 子命令）
-curl -fsSL https://xxx.deno.dev/install/pypi.sh | sh
+curl -fsSL https://{域名}/install/pypi.sh | sh
 
 # 或手动
-pip config set global.index-url https://xxx.deno.dev/api/pypi/simple/
+pip config set global.index-url https://{域名}/api/pypi/simple/
 # 或单次安装 / CI 环境变量
-pip install -i https://xxx.deno.dev/api/pypi/simple/ requests
-export PIP_INDEX_URL=https://xxx.deno.dev/api/pypi/simple/   # uv 同样读取
+pip install -i https://{域名}/api/pypi/simple/ requests
+export PIP_INDEX_URL=https://{域名}/api/pypi/simple/   # uv 同样读取
 ```
 
 simple 索引（HTML 与 JSON）与包 JSON 中内嵌的 `files.pythonhosted.org` 绝对下载地址会被改写为 `{域名}/api/pyf/...`，wheel 与 sdist 因此同样走加速通道；URL 上的 `#sha256=` 片段不变，pip 的完整性校验照常生效。

@@ -53,16 +53,39 @@
   --color-inverse-on-surface: #eff1f1;
   --color-inverse-primary: #62d4ff;
 
-  /* 毛玻璃氛围变量 — 亮色 */
-  --glass-page: #e3f2f8;
-  --glass-menu-bg: rgba(255, 255, 255, 0.55);
-  --glass-blobs:
+/* ============ 液态玻璃材质 token(iOS 26 Liquid Glass 的 CSS 侧) ============ */
+/* 折射带的几何参数由 src/lib/liquid-glass.ts 读这些值组装 SVG 滤镜;
+   非 Blink 内核不会执行那段脚本,blur/saturate 这些仍由下面的 CSS 兜底 */
+  /* 材质:半透明底 + 镜面高光 + 边缘亮线(Fresnel) + 色散环 */
+  --lg-page: #e3f2f8;
+  --lg-blobs:
     radial-gradient(40rem 40rem at 8% -10%, rgba(0, 158, 200, 0.28), transparent 62%),
     radial-gradient(34rem 34rem at 94% 4%, rgba(124, 108, 230, 0.22), transparent 60%),
     radial-gradient(46rem 46rem at 50% 112%, rgba(46, 196, 154, 0.24), transparent 64%);
-  --glass-highlight: rgba(255, 255, 255, 0.65);
-  --glass-shadow: rgba(20, 60, 90, 0.16);
-  
+
+  --lg-fill: rgba(255, 255, 255, 0.42);
+  --lg-blur: 9px;
+  --lg-saturate: 185%;
+  --lg-brightness: 106%;
+  /* 折射强度(CSS px)与棱镜色散量 */
+  --lg-refract: 26;
+  --lg-aberration: 5;
+
+  --lg-spec: rgba(255, 255, 255, 0.78);
+  --lg-sheen-top: rgba(255, 255, 255, 0.5);
+  --lg-sheen-bottom: rgba(255, 255, 255, 0.3);
+  --lg-rim: rgba(255, 255, 255, 0.66);
+  --lg-rim-soft: rgba(255, 255, 255, 0.16);
+  --lg-edge-top: rgba(255, 255, 255, 0.95);
+  --lg-edge-bottom: rgba(9, 44, 66, 0.2);
+  --lg-glow: rgba(255, 255, 255, 0.4);
+  --lg-shadow: rgba(11, 52, 78, 0.42);
+  /* 色散:左青右洋红、上润橙下透紫,和折射的分色方向一致 */
+  --lg-disperse-tl: rgba(0, 190, 255, 0.55);
+  --lg-disperse-tr: rgba(255, 70, 180, 0.45);
+  --lg-disperse-bl: rgba(150, 255, 225, 0.5);
+  --lg-disperse-br: rgba(255, 150, 60, 0.42);
+
   /* 字体 */
   --font-roboto: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", sans-serif;
   --font-mono: 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -111,15 +134,31 @@
   --color-inverse-on-surface: #191c1c;
   --color-inverse-primary: #006780;
 
-  /* 毛玻璃氛围变量 — 暗色 */
-  --glass-page: #060d14;
-  --glass-menu-bg: rgba(36, 48, 62, 0.55);
-  --glass-blobs:
+  /* 液态玻璃材质 — 暗色 */
+  --lg-page: #060d14;
+  --lg-blobs:
     radial-gradient(42rem 42rem at 8% -10%, rgba(0, 190, 255, 0.22), transparent 60%),
     radial-gradient(34rem 34rem at 94% 6%, rgba(122, 92, 255, 0.18), transparent 60%),
     radial-gradient(48rem 48rem at 50% 114%, rgba(0, 220, 180, 0.14), transparent 62%);
-  --glass-highlight: rgba(255, 255, 255, 0.12);
-  --glass-shadow: rgba(0, 0, 0, 0.5);
+  --lg-fill: rgba(18, 30, 44, 0.4);
+  --lg-blur: 11px;
+  --lg-saturate: 170%;
+  --lg-brightness: 112%;
+  --lg-refract: 22;
+  --lg-aberration: 4;
+  --lg-spec: rgba(190, 235, 255, 0.16);
+  --lg-sheen-top: rgba(255, 255, 255, 0.12);
+  --lg-sheen-bottom: rgba(255, 255, 255, 0.05);
+  --lg-rim: rgba(255, 255, 255, 0.22);
+  --lg-rim-soft: rgba(255, 255, 255, 0.07);
+  --lg-edge-top: rgba(255, 255, 255, 0.34);
+  --lg-edge-bottom: rgba(0, 0, 0, 0.5);
+  --lg-glow: rgba(120, 200, 255, 0.1);
+  --lg-shadow: rgba(0, 0, 0, 0.55);
+  --lg-disperse-tl: rgba(0, 190, 255, 0.3);
+  --lg-disperse-tr: rgba(255, 70, 180, 0.22);
+  --lg-disperse-bl: rgba(150, 255, 225, 0.24);
+  --lg-disperse-br: rgba(255, 150, 60, 0.2);
 }
 
 /* 系统暗色模式支持 */
@@ -165,15 +204,31 @@
     --color-inverse-on-surface: #191c1c;
     --color-inverse-primary: #006780;
 
-    /* 毛玻璃氛围变量 — 暗色 */
-    --glass-page: #060d14;
-    --glass-menu-bg: rgba(36, 48, 62, 0.55);
-    --glass-blobs:
+    /* 液态玻璃材质 — 暗色(与 .dark 同值) */
+    --lg-page: #060d14;
+    --lg-blobs:
       radial-gradient(42rem 42rem at 8% -10%, rgba(0, 190, 255, 0.22), transparent 60%),
       radial-gradient(34rem 34rem at 94% 6%, rgba(122, 92, 255, 0.18), transparent 60%),
       radial-gradient(48rem 48rem at 50% 114%, rgba(0, 220, 180, 0.14), transparent 62%);
-    --glass-highlight: rgba(255, 255, 255, 0.12);
-    --glass-shadow: rgba(0, 0, 0, 0.5);
+    --lg-fill: rgba(18, 30, 44, 0.4);
+    --lg-blur: 11px;
+    --lg-saturate: 170%;
+    --lg-brightness: 112%;
+    --lg-refract: 22;
+    --lg-aberration: 4;
+    --lg-spec: rgba(190, 235, 255, 0.16);
+    --lg-sheen-top: rgba(255, 255, 255, 0.12);
+    --lg-sheen-bottom: rgba(255, 255, 255, 0.05);
+    --lg-rim: rgba(255, 255, 255, 0.22);
+    --lg-rim-soft: rgba(255, 255, 255, 0.07);
+    --lg-edge-top: rgba(255, 255, 255, 0.34);
+    --lg-edge-bottom: rgba(0, 0, 0, 0.5);
+    --lg-glow: rgba(120, 200, 255, 0.1);
+    --lg-shadow: rgba(0, 0, 0, 0.55);
+    --lg-disperse-tl: rgba(0, 190, 255, 0.3);
+    --lg-disperse-tr: rgba(255, 70, 180, 0.22);
+    --lg-disperse-bl: rgba(150, 255, 225, 0.24);
+    --lg-disperse-br: rgba(255, 150, 60, 0.2);
   }
 }
 
@@ -190,7 +245,7 @@ code {
 
 body {
   font-family: var(--font-roboto);
-  background-color: var(--glass-page);
+  background-color: var(--lg-page);
   color: var(--color-on-surface);
   line-height: 1.6;
 }
@@ -202,68 +257,132 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image: var(--glass-blobs);
+  background-image: var(--lg-blobs);
 }
 
-/* ============ 毛玻璃核心 ============ */
-/* 所有表面层级应用磨砂模糊 */
+/* 次要表面(标签、代码块、输入框):同一套材质里最薄的一档,不做折射也不建定位父级,
+   110 处小元素挂伪元素或 position 只会带来层叠事故。
+   必须排在下面完整玻璃材质之前:下拉浮层同时带 bg-surface-container-highest 和 [data-menu-panel],
+   两条规则都不分层且特异性相同,谁在后面谁赢——排后面就会把浮层的 16px 折射玻璃压成 12px 薄磨砂。 */
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .bg-surface,
   .bg-surface-container-lowest,
   .bg-surface-container-low,
   .bg-surface-container,
   .bg-surface-container-high,
-  .bg-surface-container-highest,
-  header,
-  footer {
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    backdrop-filter: blur(18px) saturate(160%);
+  .bg-surface-container-highest {
+    -webkit-backdrop-filter: blur(12px) saturate(175%) brightness(104%);
+    backdrop-filter: blur(12px) saturate(175%) brightness(104%);
   }
 }
 
-/* 主要卡片 / 代码块 / 导航:顶部高光 + 悬浮投影 + 玻璃描边 */
 .bg-surface,
-.bg-surface-container-highest,
+.bg-surface-container-highest {
+  box-shadow:
+    inset 0 0 0 1px var(--lg-rim-soft),
+    inset 0 1px 0 var(--lg-edge-top),
+    0 16px 40px -20px var(--lg-shadow);
+}
+
+/* ============ 液态玻璃材质 ============ */
+/* 半透明动态玻璃,四层叠在同一个元素上:
+   1. backdrop-filter —— 背景透过来,被模糊/提饱和/提亮。Blink 内核下 src/lib/liquid-glass.ts
+      会把这条换成「同样的函数 + url(#滤镜)」多一层几何折射;非 Blink 不跑那段脚本,
+      因为 Safari/Firefox 解析 url() 通过却不渲染,连 blur 一起变成空操作,不能交给 CSS 探测。
+   2. background-image —— 镜面高光(跟随指针)+ 上润下透的纵向染色 + 随视角滑动的亮带
+   3. box-shadow —— 边缘亮线(Fresnel)、顶边镜面线、底边厚度暗线、边缘内发光、悬浮投影、色散环
+   4. 形变 —— :active 收缩 + 弹性回弹,见 .lg-press
+   刻意不用 ::before/::after 做高光层:绝对定位的伪元素要么盖住正文,要么就得给表面
+   建层叠上下文,而菜单被后续卡片压住那个坑已经踩过一次。
+   材质只在这里定义一次;.lg 给卡片挂,header/footer/浮层走同一组选择器。*/
+.lg,
+header,
+footer,
+[data-menu-panel],
+#mobile-menu {
+  --lg-light-x: 28%;
+  --lg-light-y: 6%;
+  background-color: var(--lg-fill);
+  background-image:
+    radial-gradient(60% 70% at var(--lg-light-x) var(--lg-light-y), var(--lg-spec) 0%, transparent 62%),
+    linear-gradient(
+      calc(90deg + var(--lg-tilt, 0deg)),
+      color-mix(in srgb, var(--lg-sheen-top) calc(26% + var(--lg-flow, 0) * 54%), transparent) 0%,
+      transparent 34%,
+      transparent 66%,
+      color-mix(in srgb, var(--lg-sheen-bottom) calc(20% + var(--lg-flow, 0) * 44%), transparent) 100%
+    ),
+    linear-gradient(178deg, var(--lg-sheen-top) 0%, transparent 44%, var(--lg-sheen-bottom) 100%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+  box-shadow:
+    inset 0 0 0 1px var(--lg-rim),
+    inset 0 0 0 3px var(--lg-rim-soft),
+    inset 0 1.5px 0 var(--lg-edge-top),
+    inset 0 -2px 5px -1px var(--lg-edge-bottom),
+    inset 0 0 var(--lg-glow-size, 22px 2px) var(--lg-glow),
+    /* 色散:四条极细的内描边按青/洋红/薄荷/琥珀错开,读作棱镜分色而不是描边 */
+    inset 1.5px 0 2px -1px var(--lg-disperse-tl),
+    inset -1.5px 0 2px -1px var(--lg-disperse-tr),
+    inset 0 1.5px 2px -1px var(--lg-disperse-bl),
+    inset 0 -1.5px 2px -1px var(--lg-disperse-br),
+    0 24px 48px -24px var(--lg-shadow),
+    0 2px 8px -4px var(--lg-shadow);
+}
+
+/* 果冻感:按下时收缩、松手弹回。只在需要按压反馈的元素上挂。
+   这条 transition 是不分层的,会整条盖掉元素自带的 transition-colors(global.css 排在 Tailwind
+   分层工具类之前),所以配色过渡必须在这里一起声明,否则 hover 换色会瞬间跳变。 */
+.lg-press {
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.24s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lg-press:hover {
+    transform: translateY(-1px) scale(1.012);
+  }
+}
+
+.lg-press:active {
+  transform: scale(0.965);
+}
+
+/* 浮层菜单:比卡片更透一点,背后的光斑要能透出来;同时折射更强 */
+[data-menu-panel],
+#mobile-menu {
+  --lg-fill: color-mix(in srgb, var(--color-surface) 62%, transparent);
+  --lg-blur: 16px;
+  --lg-refract: 30;
+}
+
+/* 长条档:导航 65px、页脚 41px 高,而上面那套边缘项全是绝对像素(1px 亮线、3px 软描边、
+   22px 内发光、5px 厚度暗线)。同样的数值放在 200px 的圆角卡上只占 1%,放在 41px 的条上
+   就吃掉半条表面:实测页脚顶两行是 255/242(纯白),导航底边白线 250、紧贴其下被厚度暗线压到
+   231、线外又被条子自己的投影压到 186——上白下暗,读出来就是一条硬白边。
+   这一档只收「边缘占多大」,填充/模糊/折射跟卡片完全一样。
+   rim 和 edge-top 直接取暗色档本来就在用的值,所以两种主题共用一套覆写,不必分主题写两遍。
+   边框不再上色:让标记里的 border-outline-variant 生效,和全站细线同色。 */
 header,
 footer {
-  box-shadow:
-    inset 0 1px 0 var(--glass-highlight),
-    0 16px 40px -20px var(--glass-shadow);
-}
-
-header {
-  border-bottom-color: var(--glass-highlight);
-}
-
-footer {
-  background-color: var(--color-surface-container);
-  border-top-color: var(--glass-highlight);
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
-}
-
-/* 下拉菜单浮层:surface-container-highest(0.78)接近不透明,磨砂看不出材质,
-   背后光斑透不出来就等于一块白卡片。浮层单独用更透的玻璃底 + 更强的模糊饱和 */
-#format-select-menu {
-  background-color: var(--glass-menu-bg) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-}
-
-#mobile-menu {
-  background-color: var(--color-surface-container-highest) !important;
-}
-
-#format-select-menu,
-#mobile-menu {
-  box-shadow:
-    inset 0 1px 0 var(--glass-highlight),
-    0 24px 48px -16px var(--glass-shadow);
+  --lg-rim: rgba(255, 255, 255, 0.22);
+  --lg-rim-soft: rgba(255, 255, 255, 0.08);
+  --lg-edge-top: rgba(255, 255, 255, 0.3);
+  --lg-edge-bottom: transparent;
+  --lg-glow-size: 10px 1px;
+  /* 色散环的上下两条会横着铺满整条边(卡片上它只在圆角处露一小段),长条上它就成了一条
+     带色的描边;暗线撤掉后原本被它压住的琥珀色反而露了出来,实测导航底边内 2px 处偏暖。 */
+  --lg-disperse-bl: transparent;
+  --lg-disperse-br: transparent;
 }
 
 /* 浮层菜单的当前项:primary-container 在暗色下与蓝灰玻璃几乎同色,
    选中态会被 hover 盖过去。统一改用饱和 primary 薄纱,并覆盖 hover 保证压得住 */
-.format-option.menu-active,
-.format-option.menu-active:hover {
+.menu-option.menu-active,
+.menu-option.menu-active:hover {
   background-color: color-mix(in srgb, var(--color-primary) 26%, transparent);
   color: var(--color-primary);
   font-weight: 500;
@@ -375,7 +494,10 @@ footer {
 
 @media (prefers-reduced-motion: no-preference) {
   .page-enter > * {
-    animation: page-rise 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    /* fill-mode 只用 backwards(延迟期间显示首帧),不要 both:
+       both 会在动画结束后继续持有结束帧的 transform,算出来是恒等矩阵,
+       而这个恒等 transform 会让 Blink 把后代的 backdrop 当成空快照,液态玻璃的折射整块失效。 */
+    animation: page-rise 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
   }
 
   .page-enter > :nth-child(2) { animation-delay: 70ms; }

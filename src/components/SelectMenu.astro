@@ -1,0 +1,51 @@
+---
+// 下拉选择器的外壳：触发器 + 浮层，选项行由调用方给（线路是两行式，格式是图标+名称）。
+// 圆角、留白、开合、互斥这些都在 src/lib/menu.ts 一处管着，两个选择器不会再各修一遍。
+import { menuPanel, menuTrigger, type SelectSize } from '../lib/menu';
+
+interface Props {
+  /** 业务层用 [data-menu="<name>"] 找回自己那套选项和触发器文字 */
+  name: string;
+  /** 触发器形态：sm/md 是卡片表头与页面标题里的选择，field 与输入框等高 */
+  size?: SelectSize;
+  /** 菜单展开方向，贴在卡片右侧用 right */
+  align?: 'left' | 'right';
+  /** 触发器上的当前项文字：服务端就渲染好，脚本还没跑时也不会闪空白 */
+  label?: string;
+  /** 触发器只有选项文字时读屏听不出它是干什么的，这里给一句 aria-label */
+  ariaLabel?: string;
+  /** 追加到触发器的类名，只属于某个页面的宽度下限之类 */
+  triggerClass?: string;
+  /** 追加到外层的类名，比如表单里要跟输入框同一行对齐 */
+  class?: string;
+}
+
+const {
+  name,
+  size = 'md',
+  align = 'right',
+  label = '',
+  ariaLabel,
+  triggerClass = '',
+  class: wrapperClass = '',
+} = Astro.props;
+---
+
+<!-- 浮层展开时由 menu.ts 挂到 body 上再定位，所以这里不再需要为它抬层叠上下文；
+     relative 只服务收起态的那套 absolute 占位，shrink-0 保证触发器不被同行内容压扁 -->
+<div data-menu={name} class:list={['relative shrink-0', wrapperClass]}>
+  <button
+    type="button"
+    data-menu-btn
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-label={ariaLabel}
+    class:list={[menuTrigger[size], triggerClass]}
+  >
+    <span data-menu-text class="truncate">{label}</span>
+    <span class="icon-[material-symbols--arrow-drop-down] text-lg shrink-0"></span>
+  </button>
+  <div data-menu-panel data-menu-align={align} class:list={[menuPanel, align === 'right' ? 'right-0' : 'left-0']}>
+    <slot />
+  </div>
+</div>
